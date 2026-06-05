@@ -3,176 +3,198 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Firebase Store</title>
+<title>Professional Firebase Store</title>
 <style>
-body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8}
-header{background:#2563eb;color:#fff;padding:16px;text-align:center}
-.container{max-width:1200px;margin:auto;padding:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
-.card{background:#fff;padding:16px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+body{margin:0;font-family:Arial;background:#f4f6f9}
+header{background:#2563eb;color:#fff;padding:15px 20px;display:flex;justify-content:space-between;align-items:center}
+.container{display:flex}
+.main{flex:1;padding:20px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.card{background:#fff;padding:15px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.card img{width:100%;height:180px;object-fit:cover;border-radius:8px}
+.sidebar{width:320px;background:#fff;padding:20px;box-shadow:-2px 0 8px rgba(0,0,0,.1);height:100vh;overflow:auto;position:sticky;top:0}
 button{background:#2563eb;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
-input,textarea{width:100%;padding:10px;margin:6px 0}
-#cartItems div,#history div{border-bottom:1px solid #ddd;padding:8px 0}
+input,textarea{width:100%;padding:10px;margin:6px 0;box-sizing:border-box}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5)}
+.modal-content{background:#fff;max-width:420px;margin:8% auto;padding:20px;border-radius:10px}
+.item{border-bottom:1px solid #ddd;padding:8px 0}
 </style>
 </head>
 <body>
-<header><h1>Professional Firebase Store</h1></header>
-<div class="container">
 
-<div class="card">
-<h2>Authentication</h2>
-<input id="suEmail" placeholder="Signup Email">
-<input id="suPass" type="password" placeholder="Signup Password">
-<button onclick="signup()">Sign Up</button>
-<br><br>
-<input id="liEmail" placeholder="Login Email">
-<input id="liPass" type="password" placeholder="Login Password">
-<button onclick="login()">Login</button>
+<header>
+<h2>Professional Firebase Store</h2>
+<div>
+<button onclick="openModal('loginModal')">Login</button>
+<button onclick="openModal('signupModal')">Sign Up</button>
 <button onclick="logout()">Logout</button>
-<p id="userInfo">Not logged in</p>
+<span id="userInfo">Not logged in</span>
 </div>
+</header>
 
+<div class="container">
+<div class="main">
 <h2>Products</h2>
-<div class="grid" id="products"></div>
-
-<div class="card">
-<h2>Cart</h2>
-<div id="cartItems"></div>
-<h3>Total: $<span id="total">0</span></h3>
-<button onclick="checkout()">Proceed to Checkout</button>
-</div>
+<div id="products" class="products"></div>
 
 <div class="card">
 <h2>My Order History</h2>
 <div id="history"></div>
 </div>
-
 </div>
+
+<div class="sidebar">
+<h2>Cart (<span id="cartCount">0</span>)</h2>
+<div id="cartItems"></div>
+<h3>Total: $<span id="total">0</span></h3>
+<button onclick="openModal('checkoutModal')">Checkout</button>
+</div>
+</div>
+
+<div class="modal" id="loginModal"><div class="modal-content">
+<h3>Login</h3>
+<input id="liEmail" placeholder="Email">
+<input id="liPass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="closeModal('loginModal')">Close</button>
+</div></div>
+
+<div class="modal" id="signupModal"><div class="modal-content">
+<h3>Signup</h3>
+<input id="suEmail" placeholder="Email">
+<input id="suPass" type="password" placeholder="Password">
+<button onclick="signup()">Create Account</button>
+<button onclick="closeModal('signupModal')">Close</button>
+</div></div>
+
+<div class="modal" id="checkoutModal"><div class="modal-content">
+<h3>Checkout</h3>
+<input id="customerName" placeholder="Full Name">
+<input id="customerEmail" placeholder="Email">
+<textarea id="customerMessage" placeholder="Message"></textarea>
+<button onclick="checkout()">Place Order</button>
+<button onclick="closeModal('checkoutModal')">Close</button>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init("lXfoRnDqTitTuJFig");</script>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,addDoc,getDocs,query,where} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDiljGme3XAlQm4OiEcvnkiOViRxBlFDdQ",
-  authDomain: "onlinestore-71df8.firebaseapp.com",
-  projectId: "onlinestore-71df8",
-  storageBucket: "onlinestore-71df8.firebasestorage.app",
-  messagingSenderId: "343347991088",
-  appId: "1:343347991088:web:40aa340696a3f5dfe613f5",
-  measurementId: "G-NCZJRSCT1T"
+ apiKey:"AIzaSyDiljGme3XAlQm4OiEcvnkiOViRxBlFDdQ",
+ authDomain:"onlinestore-71df8.firebaseapp.com",
+ projectId:"onlinestore-71df8",
+ storageBucket:"onlinestore-71df8.firebasestorage.app",
+ messagingSenderId:"343347991088",
+ appId:"1:343347991088:web:40aa340696a3f5dfe613f5",
+ measurementId:"G-NCZJRSCT1T"
 };
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-window.cart=[];
 let currentUser=null;
+window.cart=[];
 
 const products=[
-{name:"Laptop",price:799},
-{name:"Smart Watch",price:199},
-{name:"Headphones",price:99}
+{name:"Laptop",price:799,img:"https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600"},
+{name:"Smart Watch",price:199,img:"https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=600"},
+{name:"Headphones",price:99,img:"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600"}
 ];
 
 function renderProducts(){
- document.getElementById("products").innerHTML=products.map((p,i)=>`
- <div class="card">
- <h3>${p.name}</h3>
- <p>$${p.price}</p>
- <button onclick="addToCart(${i})">Add To Cart</button>
- </div>`).join("");
+products.innerHTML=productsData();
+}
+function productsData(){
+return products.map((p,i)=>`<div class='card'><img src='${p.img}'><h3>${p.name}</h3><p>$${p.price}</p><button onclick='addToCart(${i})'>Add To Cart</button></div>`).join('');
 }
 
 window.addToCart=(i)=>{
- const p=products[i];
- const ex=cart.find(x=>x.name===p.name);
- if(ex) ex.qty++;
- else cart.push({...p,qty:1});
- renderCart();
-}
+const p=products[i];
+const e=cart.find(x=>x.name===p.name);
+if(e)e.qty++; else cart.push({...p,qty:1});
+renderCart();
+};
 
 function renderCart(){
- let total=0;
- document.getElementById("cartItems").innerHTML=cart.map((c,i)=>{
- total+=c.price*c.qty;
- return `<div>${c.name} - $${c.price} x ${c.qty}
- <button onclick="changeQty(${i},1)">+</button>
- <button onclick="changeQty(${i},-1)">-</button></div>`;
- }).join("");
- document.getElementById("total").innerText=total;
+let total=0;
+cartItems.innerHTML=cart.map((c,i)=>{
+total+=c.price*c.qty;
+return `<div class='item'>${c.name} x ${c.qty}
+<button onclick='changeQty(${i},1)'>+</button>
+<button onclick='changeQty(${i},-1)'>-</button></div>`;
+}).join('');
+totalEl(total);
 }
-
-window.changeQty=(i,d)=>{
- cart[i].qty+=d;
- if(cart[i].qty<=0) cart.splice(i,1);
- renderCart();
-}
+function totalEl(t){document.getElementById('total').innerText=t;document.getElementById('cartCount').innerText=cart.reduce((a,b)=>a+b.qty,0);}
+window.changeQty=(i,d)=>{cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();};
 
 window.signup=()=>createUserWithEmailAndPassword(auth,suEmail.value,suPass.value);
 window.login=()=>signInWithEmailAndPassword(auth,liEmail.value,liPass.value);
 window.logout=()=>signOut(auth);
 
-onAuthStateChanged(auth,async u=>{
- currentUser=u;
- userInfo.innerText=u?u.email:"Not logged in";
- if(u) loadHistory();
+onAuthStateChanged(auth, async u=>{
+currentUser=u;
+userInfo.innerText=u?u.email:"Not logged in";
+if(u) loadHistory();
 });
 
 async function loadHistory(){
- const q=query(collection(db,"orders"),where("userId","==",currentUser.uid));
- const snap=await getDocs(q);
- history.innerHTML="";
- snap.forEach(d=>{
-  const o=d.data();
-  history.innerHTML+=`<div>${o.customerName} | ${o.total} USD | ${new Date(o.orderDate).toLocaleString()}</div>`;
- });
+const q=query(collection(db,"orders"),where("userId","==",currentUser.uid));
+const snap=await getDocs(q);
+history.innerHTML="";
+snap.forEach(doc=>{
+const o=doc.data();
+history.innerHTML += `<div class='item'><b>${o.customerName}</b> - $${o.total}<br>${o.orderDate}</div>`;
+});
 }
 
 window.checkout=async()=>{
- if(!currentUser){alert("Login first");return;}
- if(cart.length===0){alert("Cart empty");return;}
+if(!currentUser){alert("Please login first");return;}
+if(cart.length===0){alert("Cart is empty");return;}
 
- const customerName=prompt("Customer Name:");
- const customerEmail=prompt("Customer Email:");
- const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
+const customerName=document.getElementById("customerName").value;
+const customerEmail=document.getElementById("customerEmail").value;
+const customerMessage=document.getElementById("customerMessage").value;
+const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
 
- await addDoc(collection(db,"orders"),{
-  userId:currentUser.uid,
-  userEmail:currentUser.email,
-  customerName,
-  customerEmail,
-  items:cart,
-  total,
-  orderDate:new Date().toISOString()
- });
+await addDoc(collection(db,"orders"),{
+userId:currentUser.uid,
+userEmail:currentUser.email,
+customerName,
+customerEmail,
+message:customerMessage,
+items:cart,
+total,
+orderDate:new Date().toISOString()
+});
 
+await emailjs.send("service_goyuwhs","template_2zb8s4c",{
+to_email:"fahad.shahid@yphs.tp.edu.tw",
+customer_name:customerName,
+customer_email:customerEmail,
+order_details:JSON.stringify(cart,null,2),
+total:total
+});
 
- emailjs.send("service_goyuwhs","template_2zb8s4c",{
-   to_email:"fahad.shahid@yphs.tp.edu.tw",
-   customer_name:customerName,
-   customer_email:customerEmail,
-   order_details:JSON.stringify(cart),
-   total:total
- });
- 
-
- alert("Thank you! Your order has been submitted successfully.");
- cart=[];
- renderCart();
- loadHistory();
-}
+alert("Thank you! Your order has been submitted successfully.");
+cart=[];
+renderCart();
+closeModal('checkoutModal');
+loadHistory();
+};
 
 renderProducts();
 </script>
 
-
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-emailjs.init("lXfoRnDqTitTuJFig");
+function openModal(id){document.getElementById(id).style.display='block';}
+function closeModal(id){document.getElementById(id).style.display='none';}
 </script>
 </body>
 </html>
